@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieFlix - Watch & Download Movies</title>
+    <style>
+        /* CSS Styles for a real movie app look */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+        :root {
+            --primary-color: #e50914;
+            --dark-color: #141414;
+            --darker-color: #000000;
+            --light-color: #f5f5f5;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--darker-color);
+            color: var(--light-color);
+        }
+
+        .header {
+            background-color: var(--dark-color);
+            padding: 20px 40px;
+            text-align: center;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .header h1 {
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            color: #aaa;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 20px;
+        }
+
+        #movie-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 25px;
+        }
+        
+        .movie-card {
+            background-color: var(--dark-color);
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .movie-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 30px rgba(229, 9, 20, 0.4);
+        }
+
+        .movie-card img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+        }
+        
+        .movie-info {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            justify-content: space-between;
+        }
+
+        .movie-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            flex-grow: 1;
+        }
+
+        .download-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: var(--light-color);
+            text-decoration: none;
+            text-align: center;
+            border-radius: 5px;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+
+        .download-btn:hover {
+            background-color: #f6121d;
+        }
+
+        .loader {
+            text-align: center;
+            font-size: 1.5rem;
+            padding: 50px;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <h1>MovieFlix</h1>
+        <p>Your Ultimate Movie Destination</p>
+    </header>
+
+    <div class="container">
+        <div id="movie-grid">
+             <!-- Movies yahan JavaScript se load hongi -->
+             <div class="loader">Loading Movies...</div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK Scripts -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Step 1 se copy kiya hua Firebase config yahan paste karein
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
+
+        // Firebase ko initialize karein
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Movies ko fetch aur display karne ka function
+        async function fetchAndDisplayMovies() {
+            const movieGrid = document.getElementById('movie-grid');
+            movieGrid.innerHTML = '<div class="loader">Loading Movies...</div>'; // Loader dikhayein
+
+            try {
+                const moviesCollection = db.collection('movies');
+                const snapshot = await moviesCollection.get();
+
+                if (snapshot.empty) {
+                    movieGrid.innerHTML = '<p>No movies available right now. Please check back later.</p>';
+                    return;
+                }
+
+                let moviesHTML = '';
+                snapshot.forEach(doc => {
+                    const movie = doc.data();
+                    moviesHTML += `
+                        <div class="movie-card">
+                            <img src="${movie.posterUrl}" alt="${movie.title || 'Movie Poster'}">
+                            <div class="movie-info">
+                                <h3 class="movie-title">${movie.title || 'Movie'}</h3>
+                                <a href="${movie.movieUrl}" class="download-btn" download>Download</a>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                movieGrid.innerHTML = moviesHTML;
+
+            } catch (error) {
+                console.error("Error fetching movies: ", error);
+                movieGrid.innerHTML = '<p>Failed to load movies. Please try refreshing the page.</p>';
+            }
+        }
+
+        // Page load hone par movies fetch karein
+        window.onload = fetchAndDisplayMovies;
+    </script>
+
+</body>
+</html>
